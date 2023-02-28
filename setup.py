@@ -14,7 +14,7 @@ setup(
     long_description_content_type='text/markdown',
     author='Apple Inc.',
     install_requires=[
-        "coremltools>=6.1",
+        "paddle2coreml>=0.0.2",
         "diffusers[torch]",
         "torch",
         "transformers",

@@ -141,7 +141,6 @@ public struct StableDiffusionPipeline: ResourceManaging {
             concatenating: [negativePromptEmbedding, promptEmbedding],
             alongAxis: 0
         )
-
         let hiddenStates = toHiddenStates(concatEmbedding)
 
         /// Setup schedulers

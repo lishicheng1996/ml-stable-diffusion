@@ -79,7 +79,7 @@ public struct TextEncoder: ResourceManaging {
             try model.prediction(from: inputFeatures)
         }
 
-        let embeddingFeature = result.featureValue(for: "last_hidden_state")
+        let embeddingFeature = result.featureValue(for: "layer_norm_93_tmp_2")
         return MLShapedArray<Float32>(converting: embeddingFeature!.multiArrayValue!)
     }
 

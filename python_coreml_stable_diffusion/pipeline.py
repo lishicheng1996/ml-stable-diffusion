@@ -86,7 +86,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
         self.safety_checker = safety_checker
         self.text_encoder = text_encoder
         self.unet = unet
-        self.unet.in_channels = self.unet.expected_inputs["sample"]["shape"][1]
+        self.unet.in_channels = self.unet.expected_inputs["latent_input"]["shape"][1]
 
         self.vae_decoder = vae_decoder
 
@@ -95,7 +95,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
         # In PyTorch, users can determine the tensor shapes dynamically by default
         # In CoreML, tensors have static shapes unless flexible shapes were used during export
         # See https://coremltools.readme.io/docs/flexible-inputs
-        latent_h, latent_w = self.unet.expected_inputs["sample"]["shape"][2:]
+        latent_h, latent_w = self.unet.expected_inputs["latent_input"]["shape"][2:]
         self.height = latent_h * VAE_DECODER_UPSAMPLE_FACTOR
         self.width = latent_w * VAE_DECODER_UPSAMPLE_FACTOR
 
@@ -125,7 +125,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
                                             model_max_length]
 
         text_embeddings = self.text_encoder(
-            input_ids=text_input_ids.astype(np.float32))["last_hidden_state"]
+            input_ids=text_input_ids.astype(np.float32))["layer_norm_97.tmp_2"]
 
         if do_classifier_free_guidance:
             uncond_tokens: List[str]
@@ -156,7 +156,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
 
             uncond_embeddings = self.text_encoder(
                 input_ids=uncond_input.input_ids.astype(
-                    np.float32))["last_hidden_state"]
+                    np.float32))["layer_norm_97.tmp_2"]
 
             # For classifier free guidance, we need to do two forward passes.
             # Here we concatenate the unconditional and text embeddings into a single batch
@@ -197,7 +197,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
 
     def decode_latents(self, latents):
         latents = 1 / 0.18215 * latents
-        image = self.vae_decoder(z=latents.astype(np.float16))["image"]
+        image = self.vae_decoder(z=latents.astype(np.float16))["conv2d_197.tmp_1"]
         image = np.clip(image / 2 + 0.5, 0, 1)
         image = image.transpose((0, 2, 3, 1))
 
@@ -328,9 +328,9 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
 
             # predict the noise residual
             noise_pred = self.unet(
-                sample=latent_model_input.astype(np.float16),
+                latent_input=latent_model_input.astype(np.float16),
                 timestep=np.array([t, t], np.float16),
-                encoder_hidden_states=text_embeddings.astype(np.float16),
+                encoder_embedding=text_embeddings.astype(np.float16),
             )["noise_pred"]
 
             # perform guidance
@@ -339,7 +339,7 @@ class CoreMLStableDiffusionPipeline(DiffusionPipeline):
                 noise_pred = noise_pred_uncond + guidance_scale * (
                     noise_pred_text - noise_pred_uncond)
 
-            # compute the previous noisy sample x_t -> x_t-1
+            # compute the previous noisy latent_input x_t -> x_t-1
             latents = self.scheduler.step(torch.from_numpy(noise_pred),
                                           t,
                                           torch.from_numpy(latents),
@@ -404,7 +404,7 @@ def get_coreml_pipe(pytorch_pipe,
     }
 
     model_names_to_load = ["text_encoder", "unet", "vae_decoder"]
-    if getattr(pytorch_pipe, "safety_checker", None) is not None:
+    if getattr(pytorch_pipe, "safety_checker", None) is not None and False:
         model_names_to_load.append("safety_checker")
     else:
         logger.warning(
