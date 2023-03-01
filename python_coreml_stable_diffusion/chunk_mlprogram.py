@@ -31,42 +31,6 @@ import shutil
 import time
 
 
-def _verify_output_correctness_of_chunks(full_model, first_chunk_model,
-                                         second_chunk_model):
-    """ Verifies the end-to-end output correctness of full (original) model versus chunked models
-    """
-    # Generate inputs for first chunk and full model
-    input_dict = {}
-    for input_desc in full_model._spec.description.input:
-        input_dict[input_desc.name] = random_gen_input_feature_type(input_desc)
-
-    # Generate outputs for first chunk and full model
-    outputs_from_full_model = full_model.predict(input_dict)
-    outputs_from_first_chunk_model = first_chunk_model.predict(input_dict)
-
-    # Prepare inputs for second chunk model from first chunk's outputs and regular inputs
-    second_chunk_input_dict = {}
-    for input_desc in second_chunk_model._spec.description.input:
-        if input_desc.name in outputs_from_first_chunk_model:
-            second_chunk_input_dict[
-                input_desc.name] = outputs_from_first_chunk_model[
-                    input_desc.name]
-        else:
-            second_chunk_input_dict[input_desc.name] = input_dict[
-                input_desc.name]
-
-    # Generate output for second chunk model
-    outputs_from_second_chunk_model = second_chunk_model.predict(
-        second_chunk_input_dict)
-
-    # Verify correctness across all outputs from second chunk and full model
-    for out_name in outputs_from_full_model.keys():
-        torch2coreml.report_correctness(
-            original_outputs=outputs_from_full_model[out_name],
-            final_outputs=outputs_from_second_chunk_model[out_name],
-            log_prefix=f"{out_name}")
-
-
 def _load_prog_from_mlmodel(model):
     """ Load MIL Program from an MLModel
     """
@@ -277,15 +241,6 @@ def main(args):
     gc.collect()
     logger.info("Conversion of second chunk done.")
 
-    # Verify output correctness
-    if args.check_output_correctness:
-        logger.info("Verifying output correctness of chunks")
-        _verify_output_correctness_of_chunks(
-            full_model=model,
-            first_chunk_model=model_chunk1,
-            second_chunk_model=model_chunk2,
-        )
-
     # Remove original (non-chunked) model if requested
     if args.remove_original:
         logger.info(
@@ -325,13 +280,6 @@ if __name__ == "__main__":
         help=
         "If specified, removes the original (non-chunked) model to avoid duplicating storage."
     )
-    parser.add_argument(
-        "--check-output-correctness",
-        action="store_true",
-        help=
-        ("If specified, compares the outputs of original Core ML model with that of pipelined CoreML model chunks and reports PSNR in dB. ",
-         "Enabling this feature uses more memory. Disable it if your machine runs out of memory."
-         ))
 
     args = parser.parse_args()
     main(args)

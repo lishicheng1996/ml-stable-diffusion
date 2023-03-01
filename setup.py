@@ -20,6 +20,9 @@ setup(
         "transformers",
         "scipy",
         "numpy<1.24",
+        "paddlepaddle",
+        "paddlenlp",
+        "ppdiffusers",
     ],
     packages=find_packages(),
     classifiers=[
