@@ -26,7 +26,6 @@ logger.setLevel(logging.INFO)
 
 import numpy as np
 import os
-from python_coreml_stable_diffusion import torch2coreml
 import shutil
 import time
 
