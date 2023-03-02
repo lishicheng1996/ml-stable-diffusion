@@ -12,16 +12,16 @@ conda activate coreml_stable_diffusion
 cd /path/to/cloned/ml-stable-diffusion/repository
 pip install -e .
 ```
-**Step 2:** Change the path in python_coreml_stable_diffusion/paddle2coreml.py of unet/text_encoder/vae_decoder to your corresponding directories.
+**Step 2:** Configure the input form and output name of each model in python_coreml_stable_diffusion/paddle2coreml.py
 
 **Step 3:** Execute the following command from the Terminal to generate Core ML model files (`.mlpackage`)
 
 ```shell
-python -m python_coreml_stable_diffusion.paddle2coreml --convert-unet --convert-text-encoder --convert-vae-decoder -o <output-mlpackages-directory>
+python -m python_coreml_stable_diffusion.paddle2coreml --convert-unet --convert-text-encoder --convert-vae-decoder -o <output-mlpackages-directory> --bundle-resources-for-swift-cli --chunk-unet
 ```
 
 
- Some additional notable arguments:
+ Notable arguments:
 
 
 - `--bundle-resources-for-swift-cli`: Compiles all 4 models and bundles them along with necessary resources for text tokenization into `<output-mlpackages-directory>/Resources` which should provided as input to the Swift package. This flag is not necessary for the diffusers-based Python pipeline.

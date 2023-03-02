@@ -34,7 +34,7 @@ def _get_coreml_inputs(sample_inputs):
 
 
 def _get_out_path(args, submodule_name):
-    fname = f"Stable_Diffusion_version_{args.model_version}_{submodule_name}.mlpackage"
+    fname = f"Stable_Diffusion_version_{submodule_name}.mlpackage"
     fname = fname.replace("/", "_")
     return os.path.join(args.o, fname)
 
@@ -151,7 +151,7 @@ def convert_text_encoder(args):
     """ Converts the text encoder component of Stable Diffusion
     """
 
-    path = "path/to/text_encoder"
+    path = args.text_encoder_path
     out_path = _get_out_path(args, "text_encoder")
     
     # Create sample inputs for tracing, conversion and correctness verification
@@ -177,8 +177,7 @@ def convert_text_encoder(args):
 def convert_vae_decoder(args):
     """ Converts the VAE Decoder component of Stable Diffusion
     """
-    path = "path/to/vae_decoder"
-
+    path = args.vae_decoder_path
     out_path = _get_out_path(args, "vae_decoder")
 
     latent_shape = (1, 4, 64, 64)
@@ -200,8 +199,7 @@ def convert_vae_decoder(args):
 def convert_unet(args):
     """ Converts the UNet component of Stable Diffusion
     """
-    path = "path/to/unet"
-
+    path = args.unet_path
     out_path = _get_out_path(args, "unet")
 
     # Prepare sample input shapes and values
@@ -271,8 +269,11 @@ def parser_spec():
 
     # Select which models to export (All are needed for text-to-image pipeline to function)
     parser.add_argument("--convert-text-encoder", action="store_true")
+    parser.add_argument("--text-encoder-path", type=str, default="path/to/text_encoder")
     parser.add_argument("--convert-vae-decoder", action="store_true")
+    parser.add_argument("--vae-decoder-path", type=str, default="path/to/vae_decoder")
     parser.add_argument("--convert-unet", action="store_true")
+    parser.add_argument("--unet-path", type=str, default="path/to/unet")
     parser.add_argument(
         "-o",
         default=os.getcwd(),
